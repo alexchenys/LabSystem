@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>實驗室管理系統</title>
+	<link href="https://fonts.googleapis.com/css?family=Noto+Sans+TC|Noto+Serif+TC&display=swap" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="css/w3.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<style type="text/css">
+		* {
+			box-sizing: border-box;
+		}
+		.column {
+			float: left;
+			width: 50%;
+		}
+
+		/* Clear floats after the columns */
+		.row:after {
+			content: "";
+			display: table;
+			clear: both;
+		}
+		body{
+			background-image: url("image/backg/adventure-blue-sky-boat-2115578.jpg");
+		}
+		label{
+			font-family: 'Noto Sans TC', sans-serif;
+			font-size: 20px;
+		}
+		select{
+			font-family: 'Noto Sans TC', sans-serif;
+		}
+		/* Tooltip container */
+		.tooltip {
+			position: relative;
+			display: inline-block;
+			/*border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+		}
+
+		/* Tooltip text */
+		.tooltip .tooltiptext {
+			visibility: hidden;
+			width: 120px;
+			background-color: #555;
+			color: #fff;
+			text-align: center;
+			padding: 5px 0;
+			border-radius: 6px;
+
+			/* Position the tooltip text */
+			position: absolute;
+			z-index: 1;
+			bottom: 125%;
+			left: 50%;
+			margin-left: -60px;
+
+			/* Fade in tooltip */
+			opacity: 0;
+			transition: opacity 0.3s;
+		}
+
+		/* Tooltip arrow */
+		.tooltip .tooltiptext::after {
+			content: "";
+			position: absolute;
+			top: 100%;
+			left: 50%;
+			margin-left: -5px;
+			border-width: 5px;
+			border-style: solid;
+			border-color: #555 transparent transparent transparent;
+		}
+
+		/* Show the tooltip text when you mouse over the tooltip container */
+		.tooltip:hover .tooltiptext {
+			visibility: visible;
+			opacity: 1;
+		}
+	</style>
+	<script src="https://momentjs.com/downloads/moment.js"></script>
+	<script type="text/javascript">
+		$('document').ready(function(){
+			$("#stdId").on('change', function(){
+				var stdId = $('#stdId').val()
+
+				if (stdId != "") {
+					$('#chicken').removeAttr("disabled")
+				}
+			})
+			$( "#chicken" ).click(function(){
+				var day = $('#chicken').val()
+				$.ajax({
+					url: '/api/course',
+					method: 'GET'
+				})
+				.done(function(msg){
+					//console.log(msg.course)
+					const filterClassID = msg.filter(function(item, index, array){
+						return item.day === day;
+					});// 連動式表單
+					$('#chicken1').html("<option value=''disabled selected>Choose your option</option>")
+					for(var i=0; i<filterClassID.length; i++){
+						$('#chicken1').append("<option value="+filterClassID[i].classId+" >"+filterClassID[i].className+"</option>")
+					}
+					var stdId = $('#stdId').val()
+					$('#chicken1').on('change',function(){
+						var optionValue = $(this).val()
+						$.ajax({
+							url: '/api/course',
+							method: 'GET'
+						})
+						.done(function(msg){
+							console.log(optionValue)
+							const result = msg.find(({classId})=>classId == optionValue);
+							var d = new Date(); // day
+							console.log(result)
+							if (result.day == '1'){
+								var time = moment('13:05:00','HH:mm:ss')
+								//var time = moment()
+								var startTime = moment(msg[0].time1,'HH:mm:ss')
+								var afterTime = moment(msg[0].time2,'HH:mm:ss')
+								if (time.isBetween(startTime, afterTime)) {
+									console.log('is between')
+									$('#alert').html('')
+									$('#submit').removeAttr("disabled")
+								} else {
+									console.log('is not between')
+									$('#alert').html('<p>非上課時間</p>')
+								}
+							} else {
+								console.log('none')
+								$('#alert').html('<p style="color:red";>非上課時間</p>')
+							}
+
+						})
+						
+					})
+					
+				})
+			 })
+		})
+	</script>
+</head>
+<body>
+	<div class="w3-container w3-display-middle w3-animate-opacity" style="width: 80%; margin-top:50px;">
+		<form method="POST" action="/student" name="myForm" class="w3-container w3-card-4" style="padding:30px; margin-top: 50px; background-color: white; ">
+			<div class="row">
+				<div class="column w3-container">
+					<div class="tooltip"><label>姓名(Name)</label> 
+					<span class="tooltiptext">輸入姓名</span>
+					
+				</div>
+					<input class="w3-input" type="text" name="stu_name" style="width: 50%" required>
+				</div>
+				<div class="column w3-container">
+					<div class="tooltip"><label>星期</label>
+						<span class="tooltiptext">選則星期</span>
+					</div><br>
+                    <select required style="width: 50%;" class="w3-select" name="day" id="chicken" disabled> 
+						<option value="" disabled selected >Choose your option</option>
+						<option value="1">星期一</option>
+						<option value="2">星期二</option>
+						<option value="3">星期三</option>
+						<option value="4">星期四</option>
+						<option value="5">星期五</option>
+					</select>
+				</div>
+			</div>	
+			<div class="row">
+				<div class="column w3-container">
+					<div class="tooltip"><label>學號(student ID)</label>
+						<span class="tooltiptext">輸入學號</span>
+					</div>
+					<input id="stdId" class="w3-input" type="text" name="stu_id" style="width: 50%" required>
+				</div>
+				<div class="column w3-container">
+					<div class="tooltip"><label>課程名稱</label>
+						<span class="tooltiptext">輸入課程名稱</span>
+					</div><br>
+					<select required name="class" class="w3-select" style="width: 50%;" id="chicken1">
+						
+					</select>
+					<p id="alert"></p>
+				</div>
+			</div>
+			<div class="row">
+				<div class="column w3-container">
+					<div class="tooltip"><label>電腦序號(Computer Serial Number)</label>
+						<span class="tooltiptext">選擇電腦序號</span>
+					</div>
+					<div class="w3-row-padding w3-container">
+						<div class="w3-half">
+							<select required class="w3-select" name="pcid_1">
+								<option value="" disabled selected>Choose your option</option>
+								<option value="1">第一排</option>
+								<option value="2">第二排</option>
+								<option value="3">第三排</option>
+								<option value="4">第四排</option>
+								<option value="5">第五排</option>
+								<option value="6">第六排</option>
+							</select>
+						</div>
+						<div class="w3-half">
+							<select required class="w3-select" name="pcid_2">
+								<option value="" disabled selected>Choose your option</option>
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="3">3</option>
+								<option value="4">4</option>
+								<option value="5">5</option>
+								<option value="6">6</option>
+								<option value="7">7</option>
+								<option value="8">8</option>
+								<option value="9">9</option>
+								<option value="10">10</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="column">
+					<div class="w3-container">
+						<label>電腦狀況</label><br>
+						<input onclick="radioSelect1()" class="w3-radio" type="radio" name="gender" value="good" checked>
+						<label>正常(normal)</label>
+
+						<input onclick="radioSelect2();" class="w3-radio" type="radio" name="gender" value="bad">
+						<label>故障(crash)</label>
+						<a id="demo"></a>
+						<script type="text/javascript">
+								function radioSelect1()
+								{
+									document.getElementById("demo").innerHTML = "";
+								}
+								function radioSelect2(){
+									document.getElementById("demo").innerHTML = " &nbsp描述故障情況(describe the failure):<input style='width:100%' name='report' type=text class=w3-input></input>";
+								}
+						</script>
+					</div>
+				</div>
+			</div>
+			<button id="submit" class="w3-button w3-green" style="margin: 10px;" disabled>簽到</button>
+            <a href="student/search" target="_blank">簽到紀錄查詢</a>
+		</form>
+	</div>
+</body>
+    
+<script type="text/javascript">
+    	
+
+	
+</script>
+	
+</html>
